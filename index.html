@@ -163,12 +163,13 @@
   label{
     font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; opacity:.5;
   }
-  input, textarea{
+  input, textarea, select{
     font-family:'Jost', sans-serif; font-size:.92rem;
     padding:9px 2px; border:none; border-bottom:1px solid var(--line-strong);
     background:transparent; color:var(--ink); width:100%; border-radius:0;
   }
-  input:focus, textarea:focus{outline:none; border-bottom-color:var(--gold);}
+  select{background:var(--card); padding:9px 8px; border:1px solid var(--line-strong);}
+  input:focus, textarea:focus, select:focus{outline:none; border-bottom-color:var(--gold);}
   textarea{resize:vertical; min-height:60px; border:1px solid var(--line-strong); border-radius:1px; padding:10px;}
 
   button.primary{
@@ -182,9 +183,9 @@
   .status-msg{font-size:.72rem; opacity:.5; text-align:center; margin-top:10px; min-height:1em;}
 
   /* ---- filter tabs ---- */
-  .tabs{display:flex; gap:0; margin-top:32px; border:1px solid var(--line-strong); border-radius:1px; overflow:hidden;}
-  .tab{
-    flex:1; text-align:center; padding:11px 6px; font-size:.66rem; letter-spacing:.1em;
+  .tabs{display:flex; gap:0; margin-top:32px; border:1px solid var(--line-strong); border-radius:1px; overflow-x:auto;}
+  .tab{flex:0 0 auto; min-width:22%;
+    text-align:center; padding:11px 6px; font-size:.66rem; letter-spacing:.1em;
     text-transform:uppercase; cursor:pointer; background:var(--card); border-right:1px solid var(--line-strong);
   }
   .tab:last-child{border-right:none;}
@@ -204,9 +205,10 @@
   .item::before{
     content:''; position:absolute; left:0; top:14px; bottom:14px; width:2px;
   }
-  .item.finalizada::before{ background:var(--ink); }
-  .item.em_analise::before{ background:var(--gold); }
-  .item.aberto::before{ background:var(--line-strong); }
+  .item.ok::before{ background:var(--ink); }
+  .item.divergencia::before{ background:var(--gold); }
+  .item.pendencia::before{ background:#8a6a2a; }
+  .item.aguardando::before{ background:var(--line-strong); }
 
   .item-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
   .item-top strong{font-family:'Bodoni Moda', serif; font-weight:600; font-size:1.05rem;}
@@ -217,9 +219,10 @@
     text-transform:uppercase; padding:6px 12px; border-radius:1px; white-space:nowrap;
     cursor:pointer; font-weight:500;
   }
-  .stamp.aberto{ border:1px solid var(--line-strong); color:var(--ink); opacity:.55; background:transparent; }
-  .stamp.analise{ border:1px solid var(--gold); color:var(--gold); background:var(--gold-soft); }
-  .stamp.finalizada{ border:1px solid var(--ink); color:var(--paper); background:var(--ink); }
+  .stamp.aguardando{ border:1px solid var(--line-strong); color:var(--ink); opacity:.55; background:transparent; }
+  .stamp.pendencia{ border:1px solid #8a6a2a; color:#8a6a2a; background:#f1e6cd; }
+  .stamp.divergencia{ border:1px solid var(--gold); color:var(--gold); background:var(--gold-soft); }
+  .stamp.ok{ border:1px solid var(--ink); color:var(--paper); background:var(--ink); }
 
   .meta{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; margin-top:13px; font-size:.76rem;}
   .meta span{opacity:.45;}
@@ -339,16 +342,16 @@
   </div>
 
   <div class="summary" id="summary">
-    <div class="cell"><div class="num" id="cntTotal">0</div><div class="lbl">Total</div></div>
-    <div class="cell"><div class="num" id="cntAberto">0</div><div class="lbl">Aberto</div></div>
-    <div class="cell"><div class="num" id="cntAnalise">0</div><div class="lbl">Em análise</div></div>
-    <div class="cell"><div class="num" id="cntFinalizada">0</div><div class="lbl">Finalizada</div></div>
+    <div class="cell"><div class="num" id="cntPedidos">0</div><div class="lbl">Pedidos</div></div>
+    <div class="cell"><div class="num" id="cntPecas">0</div><div class="lbl">Peças</div></div>
+    <div class="cell"><div class="num" id="cntErros">0</div><div class="lbl">Erros</div></div>
+    <div class="cell"><div class="num" id="cntAssert">0%</div><div class="lbl">Assertividade</div></div>
   </div>
 
   <div class="ticket">
     <div class="ticket-head">
-      <h2 id="ticketTitle">Nova ocorrência</h2>
-      <span id="ticketSub">ficha de registro</span>
+      <h2 id="ticketTitle">Novo pedido</h2>
+      <span id="ticketSub">ficha de conferência</span>
     </div>
     <form id="form">
       <div class="grid">
@@ -365,20 +368,49 @@
           <input id="data" type="date" required>
         </div>
         <div class="field">
-          <label for="separador">Separador</label>
-          <input id="separador">
+          <label for="referencias">Referências</label>
+          <input id="referencias" type="number" min="0">
+        </div>
+        <div class="field">
+          <label for="pecas">Peças</label>
+          <input id="pecas" type="number" min="0">
         </div>
         <div class="field">
           <label for="conferente">Conferente</label>
           <input id="conferente">
         </div>
-        <div class="field full">
-          <label for="volumes">Volumes</label>
-          <input id="volumes" type="number" min="0">
+        <div class="field">
+          <label for="embalador">Embalador</label>
+          <input id="embalador">
         </div>
         <div class="field full">
-          <label for="descricao">Descrição da ocorrência</label>
-          <textarea id="descricao" required></textarea>
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="aguardando">Aguardando</option>
+            <option value="pendencia">Pendência</option>
+            <option value="divergencia">Divergência</option>
+            <option value="ok">OK</option>
+          </select>
+        </div>
+        <div class="field full" id="tipoErroField" style="display:none;">
+          <label for="tipoErro">Tipo de erro</label>
+          <select id="tipoErro">
+            <option value="">Selecione</option>
+            <option>Referência errada</option>
+            <option>Quantidade errada</option>
+            <option>Peça faltando</option>
+            <option>Cinto faltando</option>
+            <option>Lenço faltando</option>
+            <option>Tamanho errado</option>
+            <option>Cor errada</option>
+            <option>Embalagem</option>
+            <option>Erro de pedido</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="descricao">Descrição da divergência</label>
+          <textarea id="descricao"></textarea>
         </div>
         <div class="field full">
           <label for="foto">Foto do pedido</label>
@@ -388,7 +420,7 @@
           </div>
         </div>
       </div>
-      <button type="submit" class="primary" id="submitBtn">Registrar ocorrência</button>
+      <button type="submit" class="primary" id="submitBtn">Registrar pedido</button>
       <button type="button" id="cancelEdit" class="cancel-edit" style="display:none;">Cancelar edição</button>
       <div class="status-msg" id="formMsg"></div>
     </form>
@@ -400,16 +432,17 @@
 
   <div class="tabs">
     <div class="tab active" data-filter="todas">Todas</div>
-    <div class="tab" data-filter="aberto">Aberto</div>
-    <div class="tab" data-filter="em_analise">Em análise</div>
-    <div class="tab" data-filter="finalizada">Finalizada</div>
+    <div class="tab" data-filter="aguardando">Aguardando</div>
+    <div class="tab" data-filter="pendencia">Pendência</div>
+    <div class="tab" data-filter="divergencia">Divergência</div>
+    <div class="tab" data-filter="ok">OK</div>
   </div>
 
-  <button id="reportToggle" class="report-toggle">Ver relatório ↓</button>
+  <button id="reportToggle" class="report-toggle">Ver dashboard ↓</button>
 
   <div class="report-panel" id="reportPanel" style="display:none;">
     <div class="report-head">
-      <h2>Relatório</h2>
+      <h2>Dashboard</h2>
       <span id="reportPeriod"></span>
     </div>
     <div id="reportBody"></div>
@@ -425,7 +458,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, doc as fdoc, updateDoc, deleteDoc, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ====== COLE AQUI A CONFIGURAÇÃO DO SEU PROJETO FIREBASE ======
 const firebaseConfig = {
   apiKey: "AIzaSyBvsrTHca8ozVAIHLpVPmXBCzd-CqkTWqM",
   authDomain: "ocorrencias-susan-zheng.firebaseapp.com",
@@ -434,13 +466,9 @@ const firebaseConfig = {
   messagingSenderId: "691708748044",
   appId: "1:691708748044:web:31e88990abb7e78738e929"
 };
-// ==============================================================
 
-const configured = firebaseConfig.projectId && firebaseConfig.projectId !== "COLE_AQUI";
-let fsdb = null;
-if(configured){ fsdb = getFirestore(initializeApp(firebaseConfig)); }
+const fsdb = getFirestore(initializeApp(firebaseConfig));
 
-// Reduz a foto e guarda dentro do próprio registro (evita precisar de Storage pago)
 function resizeToDataUrl(file, maxSide = 900, quality = 0.7){
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -458,6 +486,7 @@ function resizeToDataUrl(file, maxSide = 900, quality = 0.7){
     img.src = url;
   });
 }
+<script>
 const USER_KEY = 'susanzheng_ocorrencias_user';
 let currentUser = null;
 try{ currentUser = localStorage.getItem(USER_KEY); }catch(err){ currentUser = null; }
@@ -524,17 +553,18 @@ function fmtDate(iso){
   return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
-const STATUS_LABEL = {aberto:'Aberto', em_analise:'Em análise', finalizada:'Finalizada'};
-const STATUS_NEXT = {aberto:'em_analise', em_analise:'finalizada', finalizada:'aberto'};
-const STATUS_STAMP_CLASS = {aberto:'aberto', em_analise:'analise', finalizada:'finalizada'};
+const STATUS_LABEL = {aguardando:'Aguardando', pendencia:'Pendência', divergencia:'Divergência', ok:'OK'};
+const STATUS_NEXT = {aguardando:'pendencia', pendencia:'divergencia', divergencia:'ok', ok:'aguardando'};
+const STATUS_STAMP_CLASS = {aguardando:'aguardando', pendencia:'pendencia', divergencia:'divergencia', ok:'ok'};
+const TIPOS_ERRO = ['Referência errada','Quantidade errada','Peça faltando','Cinto faltando','Lenço faltando','Tamanho errado','Cor errada','Embalagem','Erro de pedido','Outro'];
 
 function updateDaysCounter(){
   const dcNum = document.getElementById('dcNum');
   const dcLabel = document.getElementById('dcLabel');
-  const datas = items.map(it => it.data).filter(Boolean).sort();
+  const datas = items.filter(it => it.status==='divergencia').map(it => it.data).filter(Boolean).sort();
   if(datas.length===0){
     dcNum.textContent = '—';
-    dcLabel.textContent = 'nenhuma ocorrência registrada';
+    dcLabel.textContent = 'nenhuma divergência registrada';
     return;
   }
   const last = datas[datas.length-1];
@@ -545,14 +575,18 @@ function updateDaysCounter(){
   lastDate.setHours(0,0,0,0);
   const diff = Math.max(0, Math.round((today - lastDate) / 86400000));
   dcNum.textContent = diff;
-  dcLabel.textContent = diff===1 ? 'dia sem ocorrência' : 'dias sem ocorrência';
+  dcLabel.textContent = diff===1 ? 'dia sem divergência' : 'dias sem divergência';
 }
 
 function updateSummary(){
-  document.getElementById('cntTotal').textContent = items.length;
-  document.getElementById('cntAberto').textContent = items.filter(i=>i.status==='aberto').length;
-  document.getElementById('cntAnalise').textContent = items.filter(i=>i.status==='em_analise').length;
-  document.getElementById('cntFinalizada').textContent = items.filter(i=>i.status==='finalizada').length;
+  const pedidos = items.length;
+  const pecas = items.reduce((s,i) => s + (parseInt(i.pecas)||0), 0);
+  const erros = items.filter(i=>i.status==='divergencia').length;
+  const assert = pedidos ? (((pedidos-erros)/pedidos)*100).toFixed(1) : '0.0';
+  document.getElementById('cntPedidos').textContent = pedidos;
+  document.getElementById('cntPecas').textContent = pecas;
+  document.getElementById('cntErros').textContent = erros;
+  document.getElementById('cntAssert').textContent = assert + '%';
 }
 
 let searchTerm = '';
@@ -563,6 +597,13 @@ let confirmDeleteTimer = null;
 const cancelEditBtn = document.getElementById('cancelEdit');
 const ticketTitle = document.getElementById('ticketTitle');
 const ticketSub = document.getElementById('ticketSub');
+const statusSelect = document.getElementById('status');
+const tipoErroField = document.getElementById('tipoErroField');
+
+function syncTipoErroVisibility(){
+  tipoErroField.style.display = statusSelect.value === 'divergencia' ? 'block' : 'none';
+}
+statusSelect.addEventListener('change', syncTipoErroVisibility);
 
 function enterEditMode(it){
   editingId = it.id;
@@ -570,10 +611,14 @@ function enterEditMode(it){
   document.getElementById('cliente').value = it.cliente || '';
   document.getElementById('pedido').value = it.pedido || '';
   document.getElementById('data').value = it.data || '';
-  document.getElementById('separador').value = it.separador || '';
+  document.getElementById('referencias').value = it.referencias || '';
+  document.getElementById('pecas').value = it.pecas || '';
   document.getElementById('conferente').value = it.conferente || '';
-  document.getElementById('volumes').value = it.volumes || '';
+  document.getElementById('embalador').value = it.embalador || '';
+  document.getElementById('status').value = it.status || 'aguardando';
+  document.getElementById('tipoErro').value = it.tipo_erro || '';
   document.getElementById('descricao').value = it.descricao || '';
+  syncTipoErroVisibility();
   pendingFotoFile = null;
   if(it.foto_id){
     fotoPreview.src = it.foto_id;
@@ -581,7 +626,7 @@ function enterEditMode(it){
   } else {
     fotoPreviewWrap.style.display = 'none';
   }
-  ticketTitle.textContent = 'Editar ocorrência';
+  ticketTitle.textContent = 'Editar pedido';
   ticketSub.textContent = 'pedido ' + (it.pedido || '');
   submitBtn.textContent = 'Salvar alterações';
   cancelEditBtn.style.display = 'block';
@@ -591,12 +636,13 @@ function enterEditMode(it){
 function exitEditMode(){
   editingId = null;
   editingFotoId = null;
-  ticketTitle.textContent = 'Nova ocorrência';
-  ticketSub.textContent = 'ficha de registro';
-  submitBtn.textContent = 'Registrar ocorrência';
+  ticketTitle.textContent = 'Novo pedido';
+  ticketSub.textContent = 'ficha de conferência';
+  submitBtn.textContent = 'Registrar pedido';
   cancelEditBtn.style.display = 'none';
   formEl.reset();
   document.getElementById('data').valueAsDate = new Date();
+  syncTipoErroVisibility();
   pendingFotoFile = null;
   fotoPreviewWrap.style.display = 'none';
 }
@@ -622,7 +668,7 @@ function render(){
     return;
   }
   if(filtered.length===0){
-    listEl.innerHTML = '<div class="empty">Nenhuma ocorrência aqui.</div>';
+    listEl.innerHTML = '<div class="empty">Nenhum pedido aqui.</div>';
     return;
   }
 
@@ -638,11 +684,14 @@ function render(){
         </button>
       </div>
       <div class="meta">
-        <div><span>Separador </span>${esc(it.separador)||'—'}</div>
+        <div><span>Referências </span>${esc(it.referencias)||'—'}</div>
+        <div><span>Peças </span>${esc(it.pecas)||'—'}</div>
         <div><span>Conferente </span>${esc(it.conferente)||'—'}</div>
-        <div><span>Volumes </span>${esc(it.volumes)||'—'}</div>
+        <div><span>Embalador </span>${esc(it.embalador)||'—'}</div>
       </div>
-      <div class="desc clamped" data-toggle-desc>${esc(it.descricao)}</div>
+      ${it.status==='divergencia' ? `
+      <div class="desc clamped" data-toggle-desc>${it.tipo_erro ? `<strong>${esc(it.tipo_erro)}.</strong> ` : ''}${esc(it.descricao)}</div>
+      ` : ''}
       ${it.foto_id ? `<img class="item-foto" src="${esc(it.foto_id)}" alt="Foto do pedido" onclick="this.classList.toggle('full')">` : ''}
       <div class="item-actions">
         <button class="edit-btn" data-edit="${it.id}">Editar</button>
@@ -695,7 +744,7 @@ function renderReport(){
 
   if(items.length===0){
     reportPeriod.textContent = '';
-    reportBody.innerHTML = '<div class="report-empty">Sem ocorrências registradas ainda.</div>';
+    reportBody.innerHTML = '<div class="report-empty">Sem pedidos registrados ainda.</div>';
     return;
   }
 
@@ -705,27 +754,51 @@ function renderReport(){
     : '';
 
   const porStatus = [
-    ['Aberto', items.filter(i=>i.status==='aberto').length],
-    ['Em análise', items.filter(i=>i.status==='em_analise').length],
-    ['Finalizada', items.filter(i=>i.status==='finalizada').length],
+    ['OK', items.filter(i=>i.status==='ok').length],
+    ['Divergência', items.filter(i=>i.status==='divergencia').length],
+    ['Pendência', items.filter(i=>i.status==='pendencia').length],
+    ['Aguardando', items.filter(i=>i.status==='aguardando').length],
   ];
+
+  const erros = items.filter(i => i.status==='divergencia' && i.tipo_erro);
+  const errosPorTipo = TIPOS_ERRO
+    .map(tipo => [tipo, erros.filter(i=>i.tipo_erro===tipo).length])
+    .filter(p => p[1] > 0)
+    .sort((a,b) => b[1]-a[1]);
+
+  const funcionarios = {};
+  items.forEach(it => {
+    const nome = (it.conferente || '').trim();
+    if(!nome) return;
+    const key = nome.toLowerCase();
+    if(!funcionarios[key]) funcionarios[key] = {nome, pedidos:0, pecas:0, erros:0};
+    funcionarios[key].pedidos++;
+    funcionarios[key].pecas += parseInt(it.pecas)||0;
+    if(it.status==='divergencia') funcionarios[key].erros++;
+  });
+  const funcRows = Object.values(funcionarios).sort((a,b) => b.pedidos-a.pedidos);
 
   reportBody.innerHTML = `
     <div class="report-section">
-      <h3>Por status</h3>
-      ${reportRows(porStatus.filter(p=>p[1]>0), 'Nenhuma ocorrência.')}
+      <h3>Status dos pedidos</h3>
+      ${reportRows(porStatus.filter(p=>p[1]>0), 'Nenhum pedido.')}
     </div>
     <div class="report-section">
-      <h3>Clientes com mais ocorrências</h3>
+      <h3>Erros por tipo</h3>
+      ${reportRows(errosPorTipo, 'Sem divergências registradas.')}
+    </div>
+    <div class="report-section">
+      <h3>Clientes com mais pedidos</h3>
       ${reportRows(topCounts('cliente', 5), 'Sem dados de cliente.')}
     </div>
     <div class="report-section">
-      <h3>Por separador</h3>
-      ${reportRows(topCounts('separador', 5), 'Sem separador informado.')}
-    </div>
-    <div class="report-section">
-      <h3>Por conferente</h3>
-      ${reportRows(topCounts('conferente', 5), 'Sem conferente informado.')}
+      <h3>Desempenho por conferente</h3>
+      ${funcRows.length===0 ? '<div class="report-empty">Sem conferente informado.</div>' : funcRows.map(f => `
+        <div class="report-row">
+          <span class="rname">${esc(f.nome)}</span>
+          <span class="rcount">${f.pedidos} ped. · ${f.pecas} pç · ${f.erros} erro${f.erros===1?'':'s'} · ${f.pedidos ? (((f.pedidos-f.erros)/f.pedidos)*100).toFixed(0) : 0}%</span>
+        </div>
+      `).join('')}
     </div>
   `;
 }
@@ -735,7 +808,7 @@ document.getElementById('reportToggle').addEventListener('click', () => {
   const btn = document.getElementById('reportToggle');
   const open = panel.style.display !== 'none';
   panel.style.display = open ? 'none' : 'block';
-  btn.textContent = open ? 'Ver relatório ↓' : 'Ocultar relatório ↑';
+  btn.textContent = open ? 'Ver dashboard ↓' : 'Ocultar dashboard ↑';
 });
 
 listEl.addEventListener('click', async (e) => {
@@ -756,7 +829,7 @@ listEl.addEventListener('click', async (e) => {
     const id = badge.dataset.id;
     const it = items.find(x => x.id===id);
     if(!it) return;
-    const next = STATUS_NEXT[it.status] || 'aberto';
+    const next = STATUS_NEXT[it.status] || 'aguardando';
     it.status = next;
     render();
     try{ await col.doc(id).update({status: next}); }catch(err){}
@@ -803,13 +876,15 @@ formEl.addEventListener('submit', async (e) => {
     cliente: document.getElementById('cliente').value.trim(),
     pedido: document.getElementById('pedido').value.trim(),
     data: document.getElementById('data').value,
-    separador: document.getElementById('separador').value.trim(),
+    referencias: document.getElementById('referencias').value,
+    pecas: document.getElementById('pecas').value,
     conferente: document.getElementById('conferente').value.trim(),
-    volumes: document.getElementById('volumes').value,
+    embalador: document.getElementById('embalador').value.trim(),
+    status: document.getElementById('status').value,
+    tipo_erro: document.getElementById('status').value === 'divergencia' ? document.getElementById('tipoErro').value : '',
     descricao: document.getElementById('descricao').value.trim(),
   };
   if(!editingId){
-    doc.status = 'aberto';
     doc._ts = Date.now();
     doc.registrado_por = currentUser || '';
   }
@@ -863,31 +938,24 @@ formEl.addEventListener('submit', async (e) => {
 
 async function init(){
   assetsApi = { upload: async (file) => ({ id: await resizeToDataUrl(file) }) };
-
-  if(fsdb){
-    const ref = collection(fsdb, 'ocorrencias');
-    db = true;
-    col = {
-      add: (d) => addDoc(ref, d),
-      doc: (id) => ({
-        update: (d) => updateDoc(fdoc(fsdb, 'ocorrencias', id), d),
-        delete: () => deleteDoc(fdoc(fsdb, 'ocorrencias', id))
-      }),
-      onSnapshot: (ok, fail) => onSnapshot(ref, ok, fail)
-    };
-    col.onSnapshot(
-      (snap) => {
-        items = snap.docs.map(d => ({id:d.id, ...d.data()}));
-        ready = true;
-        render();
-      },
-      (err) => { ready = true; render(); }
-    );
-  } else {
-    ready = true;
-    render();
-    document.getElementById('formMsg').textContent = 'Configure o Firebase para salvar os dados.';
-  }
+  const ref = collection(fsdb, 'ocorrencias');
+  db = true;
+  col = {
+    add: (d) => addDoc(ref, d),
+    doc: (id) => ({
+      update: (d) => updateDoc(fdoc(fsdb, 'ocorrencias', id), d),
+      delete: () => deleteDoc(fdoc(fsdb, 'ocorrencias', id))
+    }),
+    onSnapshot: (ok, fail) => onSnapshot(ref, ok, fail)
+  };
+  col.onSnapshot(
+    (snap) => {
+      items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      ready = true;
+      render();
+    },
+    (err) => { ready = true; render(); }
+  );
 }
 init();
 </script>
