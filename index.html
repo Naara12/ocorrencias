@@ -467,9 +467,9 @@ const firebaseConfig = {
   appId: "1:691708748044:web:31e88990abb7e78738e929"
 };
 
-const fsdb = getFirestore(initializeApp(firebaseConfig));
+window.__fsdb = getFirestore(initializeApp(firebaseConfig));
 
-function resizeToDataUrl(file, maxSide = 900, quality = 0.7){
+window.__resizeToDataUrl = function(file, maxSide = 900, quality = 0.7){
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -485,7 +485,10 @@ function resizeToDataUrl(file, maxSide = 900, quality = 0.7){
     img.onerror = reject;
     img.src = url;
   });
-}
+};
+
+window.__fsFns = { collection, addDoc, fdoc, updateDoc, deleteDoc, onSnapshot };
+</script>
 <script>
 const USER_KEY = 'susanzheng_ocorrencias_user';
 let currentUser = null;
@@ -937,7 +940,9 @@ formEl.addEventListener('submit', async (e) => {
 });
 
 async function init(){
-  assetsApi = { upload: async (file) => ({ id: await resizeToDataUrl(file) }) };
+  const { collection, addDoc, fdoc, updateDoc, deleteDoc, onSnapshot } = window.__fsFns;
+  const fsdb = window.__fsdb;
+  assetsApi = { upload: async (file) => ({ id: await window.__resizeToDataUrl(file) }) };
   const ref = collection(fsdb, 'ocorrencias');
   db = true;
   col = {
